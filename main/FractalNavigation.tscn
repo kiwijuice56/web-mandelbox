@@ -8,10 +8,10 @@
 shader = ExtResource( 3 )
 shader_param/cam_pos = Vector3( 8, 8, 9 )
 shader_param/cam_mat = Basis( 0, 0, 0, 0, 0, 0, 0, 0, 0 )
+shader_param/fov = 90.0
 shader_param/width = 0.3
 shader_param/height = 0.1
-shader_param/fov = 90.0
-shader_param/shimmer_speed = 0.2
+shader_param/SHIMMER_SPEED = 0.1
 
 [node name="FractalNavigation" type="ColorRect"]
 material = SubResource( 1 )
@@ -23,5 +23,6 @@ script = ExtResource( 1 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6 )
 script = ExtResource( 2 )
 mouse_sensitivity = 0.002
+move_speed = 4.0
 
 [node name="Camera" type="Camera" parent="Viewer"]

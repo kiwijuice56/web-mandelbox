@@ -1,12 +1,16 @@
 shader_type canvas_item;
 
-uniform vec3 cam_pos = vec3(8.0,8.0,9.0);
+// Camera params
+uniform vec3 cam_pos = vec3(0.0);
 uniform mat3 cam_mat = mat3(0.0);
+uniform float fov = 90.0;
+
+// Screen size
 uniform float width = 0.3;
 uniform float height = 0.1;
-uniform float fov = 90.0;
-uniform float shimmer_speed = 0.1;
 
+// Misc constants that shouldn't change during runtime
+uniform float SHIMMER_SPEED = 0.1;
 const float COLLISION_THRESHOLD = 13e-4;
 const int MAX_ITER = 128;
 const float UNIVERSE_SIZE = 16.0;
@@ -37,7 +41,9 @@ void box_fold(inout vec3 p) {
 	p.z = clamp(p.z, -0.5, 0.5) * 2.0 - p.z;
 }
 
+// http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_de(vec3 p) {
+	// Uncomment for infinite mandelbox (causes lag :{ though)
 	//p = mod(p, UNIVERSE_SIZE) - vec3(8.0);
 	float dz = 1.0;
 	vec3 o = p;
@@ -82,11 +88,9 @@ void fragment() {
 	
 	float closest_dist = UNIVERSE_SIZE;
 	int iter = march(ray_pos, ray_dir, MAX_ITER, closest_dist);
-	vec3 col = hsv2rgb(vec3(float(iter) / float(MAX_ITER) + TIME * shimmer_speed, 0.65, 1.0));
-	if (iter < MAX_ITER) {
+	vec3 col = hsv2rgb(vec3(float(iter) / float(MAX_ITER) + TIME * SHIMMER_SPEED, 0.65, 1.0));
+	if (iter < MAX_ITER) 
 		COLOR.rgb =  col;
-	} else {
-		float glow = 1.0 - pow(closest_dist, 0.25);
-		COLOR.rgb = col * pow(glow, 2.5);
-	}
+	else 
+		COLOR.rgb = col * pow(1.0 - pow(closest_dist, 0.25), 2.5);
 }
