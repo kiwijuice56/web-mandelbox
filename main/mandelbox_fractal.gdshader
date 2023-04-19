@@ -88,6 +88,7 @@ void fragment() {
 	
 	float closest_dist = UNIVERSE_SIZE;
 	int iter = march(ray_pos, ray_dir, MAX_ITER, closest_dist);
+	
 	vec3 col = hsv2rgb(vec3(float(iter) / float(MAX_ITER) + TIME * SHIMMER_SPEED, 0.65, 1.0));
 	if (iter < MAX_ITER) 
 		COLOR.rgb =  col;
