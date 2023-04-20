@@ -1,20 +1,26 @@
 shader_type canvas_item;
 
-// Camera params
+// Camera state, set by fractal_navigation.gd
 uniform vec3 cam_pos = vec3(0.0);
-uniform mat3 cam_mat = mat3(0.0);
-uniform float fov = 90.0;
+uniform mat3 cam_mat = mat3(0.0); // The camera basis matrix
+uniform float fov = 95.0;
 
-// Screen size
-uniform float width = 0.3;
-uniform float height = 0.1;
+// Screen size, set by set by fractal_navigation.gd
+uniform float width = 1024.0;
+uniform float height = 1024.0;
 
-// Misc constants that shouldn't change during runtime
-uniform float SHIMMER_SPEED = 0.1;
-const float COLLISION_THRESHOLD = 13e-4;
-const int MAX_ITER = 128;
-const float UNIVERSE_SIZE = 16.0;
-const float RUNAWAY_THRESHOLD = 24.0;
+// Animation uniforms
+uniform float shimmer_speed = 0.1;
+uniform float scale_speed = 0.5;
+uniform float scale_range = 0.25;
+uniform float scale_center = 2.25;
+uniform float glow_range = 0.1;
+
+// Calculation uniforms
+uniform float collision_threshold = 13e-4;
+uniform float universe_size = 16.0;
+uniform float runaway_threshold = 24.0;
+
 const float PI = 3.1415926535897932384626433832795;
 
 // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
@@ -43,34 +49,38 @@ void box_fold(inout vec3 p) {
 
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_de(vec3 p) {
-	// Uncomment for infinite mandelbox (causes lag :{ though)
+	// Uncomment for infinite mandelbox
 	//p = mod(p, UNIVERSE_SIZE) - vec3(8.0);
 	float dz = 1.0;
-	vec3 o = p;
-	float scale = sin(TIME / 2.0) * 0.35 + 2.25;
+	vec3 original = p;
+	float scale = sin(TIME * scale_speed) * scale_range + scale_center;
 	for (int i = 0; i < 10; i++) {
 		box_fold(p);
 		sphere_fold(p, dz);
-		p = p * scale + o;
+		p = p * scale + original;
 		dz = dz * scale + 1.0;
 	}
 	return length(p) / dz;
 }
 
-int march(inout vec3 ray_pos, vec3 ray_dir, int max_iter, inout float closest_dist) {
-	float dist = UNIVERSE_SIZE;
+int march(inout vec3 ray_pos, vec3 ray_dir, inout float closest_dist) {
+	float dist = universe_size;
 	int iter = 0;
+	// WebGL has a limitation that won't allow the shader to compile
+	// if a non-constant is used in for-loops; 128 is `MAX_ITER`
 	for (int i = 0; i < 128; i++) {
 		dist = abs(mandelbox_de(ray_pos));
 		closest_dist = min(closest_dist, dist);
 		ray_pos += ray_dir * dist;
 		
-		if (dist > RUNAWAY_THRESHOLD) {
+		// We can quit marching early if we are extremely far from the fractal
+		if (dist > runaway_threshold) {
 			iter = 128;
 			break;
 		}
 		
-		if (dist < COLLISION_THRESHOLD)
+		// Once we are close enough to the fractal, we say we "collided" with it
+		if (dist < collision_threshold)
 			break;
 		iter++;
 	}
@@ -79,19 +89,24 @@ int march(inout vec3 ray_pos, vec3 ray_dir, int max_iter, inout float closest_di
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays.html
 void fragment() {
+	// Take the pixel position (UV) and convert it into a ray direction based 
+	// on the camera's orientation
 	vec3 ray_pos = cam_pos;
 	float aspect = width / height;
-	float pX = (2.0 * UV.x - 1.0) * tan(fov / 2.0 * PI / 180.0) * aspect;
-	float pY = (1.0 - 2.0 * UV.y * tan(fov / 2.0 * PI / 180.0));
-	vec3 ray_dir = vec3(pX, pY, -1);
+	float px = (2.0 * UV.x - 1.0) * tan(fov / 2.0 * PI / 180.0) * aspect;
+	float py = (1.0 - 2.0 * UV.y * tan(fov / 2.0 * PI / 180.0));
+	vec3 ray_dir = vec3(px, py, -1);
 	ray_dir = cam_mat * normalize(ray_dir);
 	
-	float closest_dist = UNIVERSE_SIZE;
-	int iter = march(ray_pos, ray_dir, MAX_ITER, closest_dist);
+	float closest_dist = universe_size;
+	int iter = march(ray_pos, ray_dir, closest_dist);
 	
-	vec3 col = hsv2rgb(vec3(float(iter) / float(MAX_ITER) + TIME * SHIMMER_SPEED, 0.65, 1.0));
-	if (iter < MAX_ITER) 
+	vec3 col = hsv2rgb(vec3(float(iter) / 128.0 + TIME * shimmer_speed, 0.65, 1.0));
+	
+	// Color the fractal if we collided with it, otherwise create a glow with
+	// the closest we ever got to the fractal
+	if (iter < 128) 
 		COLOR.rgb =  col;
 	else 
-		COLOR.rgb = col * pow(1.0 - pow(closest_dist, 0.25), 2.5);
+		COLOR.rgb = col * (1.0 - pow(closest_dist, glow_range));
 }

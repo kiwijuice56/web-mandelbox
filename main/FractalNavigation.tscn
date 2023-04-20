@@ -8,10 +8,17 @@
 shader = ExtResource( 3 )
 shader_param/cam_pos = Vector3( 8, 8, 9 )
 shader_param/cam_mat = Basis( 0, 0, 0, 0, 0, 0, 0, 0, 0 )
-shader_param/fov = 90.0
-shader_param/width = 0.3
-shader_param/height = 0.1
-shader_param/SHIMMER_SPEED = 0.1
+shader_param/fov = 95.0
+shader_param/width = 1024.0
+shader_param/height = 1024.0
+shader_param/shimmer_speed = 0.1
+shader_param/scale_speed = 0.5
+shader_param/scale_range = 0.25
+shader_param/scale_center = 2.25
+shader_param/glow_range = 0.1
+shader_param/collision_threshold = 0.0013
+shader_param/universe_size = 16.0
+shader_param/runaway_threshold = 24.0
 
 [node name="FractalNavigation" type="ColorRect"]
 material = SubResource( 1 )

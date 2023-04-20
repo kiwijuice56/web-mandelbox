@@ -14,3 +14,8 @@ func _input(event: InputEvent) -> void:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	if event.is_action_pressed("randomize", false):
+		material.set_shader_param("scale_range", rand_range(0.5, 1.5))
+		material.set_shader_param("scale_center", rand_range(1.75, 3.0))
+		
+		
