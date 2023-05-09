@@ -7,15 +7,3 @@ func _process(_delta) -> void:
 	material.set_shader_param("cam_mat", cam.global_transform.basis)
 	material.set_shader_param("width", get_viewport().size.x)
 	material.set_shader_param("height", get_viewport().size.y)
-
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("mouse_lock", false):
-		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-		else:
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	if event.is_action_pressed("randomize", false):
-		material.set_shader_param("scale_range", rand_range(0.5, 1.5))
-		material.set_shader_param("scale_center", rand_range(1.75, 3.0))
-		
-		

@@ -16,6 +16,11 @@ uniform float scale_range = 0.25;
 uniform float scale_center = 2.25;
 uniform float glow_range = 0.1;
 
+uniform int palette = 2;
+uniform bool ambient_occlusion = true;
+uniform bool glow = true;
+uniform bool mirror = false;
+
 // Calculation uniforms
 uniform float collision_threshold = 13e-4;
 uniform float universe_size = 16.0;
@@ -28,6 +33,34 @@ vec3 hsv2rgb(vec3 c) {
 	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
 	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+vec3 get_color(int iter, vec3 ray_pos) {
+	if (palette == 1) {
+		return hsv2rgb(vec3(float(iter) / 128.0 + TIME * shimmer_speed, 0.65, 1.0));
+	} else if (palette == 2) {
+		return vec3(1.0);
+	} else if (palette == 3) {
+		if (iter == 128) {
+			return vec3(1.0);
+		}
+		vec3 col = abs(mod(ray_pos, 1.0));
+		return hsv2rgb(vec3(col.r + col.g + col.b, 0.7, 1.0));
+	} else if (palette == 4) { 
+		float scaled_shimmer = float(iter) / 128.0 * 4.0;
+		scaled_shimmer -= floor(scaled_shimmer);
+		float cyclic_scaled_iter = scaled_shimmer < 0.5 ? scaled_shimmer * 2.0 : 2.0 - 2.0 * scaled_shimmer;
+		cyclic_scaled_iter *= 0.7;
+		return vec3(cyclic_scaled_iter, 0.5 + cyclic_scaled_iter, 0.8 + cyclic_scaled_iter);
+	} else if (palette == 5) {
+		float scaled_shimmer = float(iter) / 128.0 * (4.0 + sin(TIME) * 2.0);
+		scaled_shimmer -= floor(scaled_shimmer);
+		float cyclic_scaled_iter = scaled_shimmer < 0.5 ? scaled_shimmer * 2.0 : 2.0 - 2.0 * scaled_shimmer;
+		cyclic_scaled_iter *= 0.45;
+		return vec3(0.5 - cyclic_scaled_iter, 0, 0.15 - cyclic_scaled_iter);
+	} else {
+		return vec3(0.0);
+	}
 }
 
 void sphere_fold(inout vec3 p, inout float dz) {
@@ -50,7 +83,9 @@ void box_fold(inout vec3 p) {
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_de(vec3 p) {
 	// Uncomment for infinite mandelbox
-	//p = mod(p, UNIVERSE_SIZE) - vec3(8.0);
+	if (mirror) {
+		p = mod(p, 16.0) - vec3(8.0);
+	}
 	float dz = 1.0;
 	vec3 original = p;
 	float scale = sin(TIME * scale_speed) * scale_range + scale_center;
@@ -101,12 +136,20 @@ void fragment() {
 	float closest_dist = universe_size;
 	int iter = march(ray_pos, ray_dir, closest_dist);
 	
-	vec3 col = hsv2rgb(vec3(float(iter) / 128.0 + TIME * shimmer_speed, 0.65, 1.0));
+	vec3 col = get_color(iter, ray_pos);
 	
 	// Color the fractal if we collided with it, otherwise create a glow with
 	// the closest we ever got to the fractal
-	if (iter < 128) 
-		COLOR.rgb =  col;
-	else 
-		COLOR.rgb = col * (1.0 - pow(closest_dist, glow_range));
+	COLOR.rgb = col;
+	if (iter < 128) {
+		if (ambient_occlusion) {
+			COLOR.rgb *= vec3(1.0 - float(iter) / 128.0);
+		}
+	} else {
+		if (glow) {
+			COLOR.rgb *= (1.0 - pow(closest_dist, glow_range));
+		} else {
+			COLOR.rgb *= 0.0;
+		}
+	}
 }
