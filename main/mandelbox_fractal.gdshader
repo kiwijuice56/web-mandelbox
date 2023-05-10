@@ -42,10 +42,10 @@ vec3 get_color(int iter, vec3 ray_pos) {
 		return vec3(1.0);
 	} else if (palette == 3) {
 		if (iter == 128) {
-			return vec3(1.0);
+			ray_pos = vec3(sin(TIME * shimmer_speed));
 		}
 		vec3 col = abs(mod(ray_pos, 1.0));
-		return hsv2rgb(vec3(col.r + col.g + col.b, 0.7, 1.0));
+		return hsv2rgb(vec3(col.r + col.g + col.b + 4.0 * float(iter) / 128.0, 0.7, 1.0));
 	} else if (palette == 4) { 
 		float scaled_shimmer = float(iter) / 128.0 * 4.0;
 		scaled_shimmer -= floor(scaled_shimmer);
