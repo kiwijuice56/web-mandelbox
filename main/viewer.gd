@@ -1,3 +1,4 @@
+class_name Viewer
 extends Spatial
 
 export var mouse_sensitivity: float = 0.001

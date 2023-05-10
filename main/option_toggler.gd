@@ -4,7 +4,7 @@ extends Node
 
 # Each string in this array corresponds to a boolean in the shader and an input 
 # action to reduce code repetition for simple toggles
-const settings = ["ambient_occlusion", "glow", "mirror"]
+const settings: Array = ["ambient_occlusion", "glow", "mirror"]
 
 onready var material: ShaderMaterial = get_parent().material
 
@@ -20,6 +20,7 @@ func _input(event: InputEvent) -> void:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	if event.is_action_pressed("randomize", false):
-		material.set_shader_param("scale_range", rand_range(0.5, 1.5))
-		material.set_shader_param("scale_center", rand_range(1.75, 5.0))
+	if event.is_action_pressed("threshold_down", false):
+		material.set_shader_param("collision_threshold", material.get_shader_param("collision_threshold") + 6e-4)
+	if event.is_action_pressed("threshold_up", false):
+		material.set_shader_param("collision_threshold", max(1e-4, material.get_shader_param("collision_threshold") - 6e-4))

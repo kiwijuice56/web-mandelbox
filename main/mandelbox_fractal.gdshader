@@ -3,88 +3,88 @@ shader_type canvas_item;
 // Camera state, set by fractal_navigation.gd
 uniform vec3 cam_pos = vec3(0.0);
 uniform mat3 cam_mat = mat3(0.0); // The camera basis matrix
-uniform float fov = 95.0;
 
 // Screen size, set by set by fractal_navigation.gd
 uniform float width = 1024.0;
 uniform float height = 1024.0;
 
-// Animation uniforms
-uniform float shimmer_speed = 0.1;
-uniform float scale_speed = 0.5;
-uniform float scale_range = 0.25;
-uniform float scale_center = 2.25;
-uniform float glow_range = 0.1;
+// Animation constants
+const float shimmer_speed = 0.1;
+const float scale_speed = 0.5;
+const float scale_range = 0.25;
+const float scale_center = 2.25;
+const float glow_range = 0.1;
 
+// Calculation constants
+const float fov = 95.0;
+const float universe_size = 16.0;
+const float runaway_threshold = 24.0;
+
+// Parameters
 uniform int palette = 2;
 uniform bool ambient_occlusion = true;
 uniform bool glow = true;
 uniform bool mirror = false;
-
-// Calculation uniforms
-uniform float collision_threshold = 13e-4;
-uniform float universe_size = 16.0;
-uniform float runaway_threshold = 24.0;
+uniform float collision_threshold = 9e-4;
 
 const float PI = 3.1415926535897932384626433832795;
 
 // http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
 vec3 hsv2rgb(vec3 c) {
-	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+	vec4 k = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	vec3 p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);
+	return c.z * mix(k.xxx, clamp(p - k.xxx, 0.0, 1.0), c.y);
 }
 
 vec3 get_color(int iter, vec3 ray_pos) {
+	float x = float(iter) / 128.0;
+	
 	if (palette == 1) {
-		return hsv2rgb(vec3(float(iter) / 128.0 + TIME * shimmer_speed, 0.65, 1.0));
+		return hsv2rgb(vec3(x + TIME * shimmer_speed, 0.65, 1.0));
 	} else if (palette == 2) {
 		return vec3(1.0);
 	} else if (palette == 3) {
 		if (iter == 128) {
 			ray_pos = vec3(sin(TIME * shimmer_speed));
 		}
-		vec3 col = abs(mod(ray_pos, 1.0));
-		return hsv2rgb(vec3(col.r + col.g + col.b + 4.0 * float(iter) / 128.0, 0.7, 1.0));
+		vec3 col = mod(ray_pos, 1.0);
+		return hsv2rgb(vec3(col.r + col.g + col.b + x, 0.7, 1.0));
 	} else if (palette == 4) { 
-		float scaled_shimmer = float(iter) / 128.0 * 4.0;
-		scaled_shimmer -= floor(scaled_shimmer);
-		float cyclic_scaled_iter = scaled_shimmer < 0.5 ? scaled_shimmer * 2.0 : 2.0 - 2.0 * scaled_shimmer;
-		cyclic_scaled_iter *= 0.7;
-		return vec3(cyclic_scaled_iter, 0.5 + cyclic_scaled_iter, 0.8 + cyclic_scaled_iter);
+		// Scale x to increase the density of colors
+		float y = x * 4.0;
+		y -= floor(y);
+		
+		// Rather than let y jump directly from 1 to 0, double it to have a continuous change
+		float wave_y = y < 0.5 ? y * 2.0 : 2.0 - 2.0 * y;
+		wave_y *= 0.7;
+		return vec3(wave_y, 0.5 + wave_y, 0.8 + wave_y);
 	} else if (palette == 5) {
-		float scaled_shimmer = float(iter) / 128.0 * (4.0 + sin(TIME) * 2.0);
-		scaled_shimmer -= floor(scaled_shimmer);
-		float cyclic_scaled_iter = scaled_shimmer < 0.5 ? scaled_shimmer * 2.0 : 2.0 - 2.0 * scaled_shimmer;
-		cyclic_scaled_iter *= 0.45;
-		return vec3(0.5 - cyclic_scaled_iter, 0, 0.15 - cyclic_scaled_iter);
+		float y = x * (4.0 + sin(TIME) * 2.0);
+		y -= floor(y);
+		float wave_y = y < 0.5 ? y * 2.0 : 2.0 - 2.0 * y;
+		wave_y *= 0.45;
+		return vec3(0.5 - wave_y, 0.0, 0.15 - wave_y);
 	} else {
 		return vec3(0.0);
 	}
 }
 
 void sphere_fold(inout vec3 p, inout float dz) {
-	float r2 = p.x * p.x + p.y * p.y + p.z * p.z;
-	if (r2 < 0.25) {
-		p *= 0.5 / 0.25;
-		dz *= 0.5 / 0.25;
-	} else if (r2 < 0.5) {
+	float r2 = max(0.25, p.x * p.x + p.y * p.y + p.z * p.z);
+	if (r2 < 0.5) {
 		p *= 0.5 / r2;
 		dz *= 0.5 / r2;
 	}
 }
 
 void box_fold(inout vec3 p) {
-	p.x = clamp(p.x, -0.5, 0.5) * 2.0 - p.x;
-	p.y = clamp(p.y, -0.5, 0.5) * 2.0 - p.y;
-	p.z = clamp(p.z, -0.5, 0.5) * 2.0 - p.z;
+	p = clamp(p, -0.5, 0.5) * 2.0 - p;
 }
 
 // http://blog.hvidtfeldts.net/index.php/2011/11/distance-estimated-3d-fractals-vi-the-mandelbox/
 float mandelbox_de(vec3 p) {
-	// Uncomment for infinite mandelbox
 	if (mirror) {
-		p = mod(p, 16.0) - vec3(8.0);
+		p = mod(p, universe_size) - vec3(universe_size / 2.0);
 	}
 	float dz = 1.0;
 	vec3 original = p;
@@ -101,6 +101,7 @@ float mandelbox_de(vec3 p) {
 int march(inout vec3 ray_pos, vec3 ray_dir, inout float closest_dist) {
 	float dist = universe_size;
 	int iter = 0;
+	
 	// WebGL has a limitation that won't allow the shader to compile
 	// if a non-constant is used in for-loops; 128 is `MAX_ITER`
 	for (int i = 0; i < 128; i++) {
@@ -115,8 +116,9 @@ int march(inout vec3 ray_pos, vec3 ray_dir, inout float closest_dist) {
 		}
 		
 		// Once we are close enough to the fractal, we say we "collided" with it
-		if (dist < collision_threshold)
+		if (dist < collision_threshold) {
 			break;
+		}
 		iter++;
 	}
 	return iter;
@@ -127,8 +129,7 @@ void fragment() {
 	// Take the pixel position (UV) and convert it into a ray direction based 
 	// on the camera's orientation
 	vec3 ray_pos = cam_pos;
-	float aspect = width / height;
-	float px = (2.0 * UV.x - 1.0) * tan(fov / 2.0 * PI / 180.0) * aspect;
+	float px = (2.0 * UV.x - 1.0) * tan(fov / 2.0 * PI / 180.0) * (width / height);
 	float py = (1.0 - 2.0 * UV.y * tan(fov / 2.0 * PI / 180.0));
 	vec3 ray_dir = vec3(px, py, -1);
 	ray_dir = cam_mat * normalize(ray_dir);

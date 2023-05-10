@@ -1,3 +1,4 @@
+class_name FractalNavigation
 extends ColorRect
 
 onready var cam: Camera = get_node("Viewer/Camera")
