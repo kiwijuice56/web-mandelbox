@@ -52,7 +52,7 @@ margin_bottom = 343.0
 [node name="Label" type="Label" parent="HelpPanelContainer/VBoxContainer"]
 margin_right = 510.0
 margin_bottom = 285.0
-text = "Movement controls:
+text = "Navigation controls:
 - WASD, Shift, and Space control movement
 - Arrow keys rotate the camera
 - L toggles the mouse to be used as the camera
