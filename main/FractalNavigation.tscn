@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://main/fractal_navigation.gd" type="Script" id=1]
 [ext_resource path="res://main/viewer.gd" type="Script" id=2]
 [ext_resource path="res://main/mandelbox_fractal.gdshader" type="Shader" id=3]
-[ext_resource path="res://main/option_toggler.gd" type="Script" id=4]
+[ext_resource path="res://main/ui/ui_theme.tres" type="Theme" id=5]
+[ext_resource path="res://main/ui/UI.tscn" type="PackedScene" id=6]
 
 [sub_resource type="ShaderMaterial" id=1]
 shader = ExtResource( 3 )
@@ -21,6 +22,7 @@ shader_param/collision_threshold = 0.0013
 material = SubResource( 1 )
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = ExtResource( 5 )
 script = ExtResource( 1 )
 
 [node name="Viewer" type="Spatial" parent="."]
@@ -31,5 +33,4 @@ move_speed = 4.0
 
 [node name="Camera" type="Camera" parent="Viewer"]
 
-[node name="OptionToggler" type="Node" parent="."]
-script = ExtResource( 4 )
+[node name="UI" parent="." instance=ExtResource( 6 )]
