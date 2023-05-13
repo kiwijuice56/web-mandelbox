@@ -23,11 +23,17 @@ _global_script_classes=[ {
 "class": "UrlButton",
 "language": "GDScript",
 "path": "res://main/ui/url_button.gd"
+}, {
+"base": "Spatial",
+"class": "Viewer",
+"language": "GDScript",
+"path": "res://main/viewer.gd"
 } ]
 _global_script_class_icons={
 "OptionToggler": "",
 "ToggleHelpButton": "",
-"UrlButton": ""
+"UrlButton": "",
+"Viewer": ""
 }
 
 [application]
@@ -99,14 +105,9 @@ mouse_lock={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":76,"unicode":0,"echo":false,"script":null)
  ]
 }
-randomize={
-"deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":82,"unicode":0,"echo":false,"script":null)
- ]
-}
 ambient_occlusion={
 "deadzone": 0.5,
-"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":67,"unicode":0,"echo":false,"script":null)
+"events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":79,"unicode":0,"echo":false,"script":null)
  ]
 }
 glow={
@@ -129,6 +130,10 @@ threshold_down={
 "events": [ Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"pressed":false,"scancode":0,"physical_scancode":74,"unicode":0,"echo":false,"script":null)
  ]
 }
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
 
 [physics]
 
