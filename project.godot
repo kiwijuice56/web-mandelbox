@@ -9,6 +9,11 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "ColorRect",
+"class": "FractalNavigation",
+"language": "GDScript",
+"path": "res://main/fractal_navigation.gd"
+}, {
 "base": "Node",
 "class": "OptionToggler",
 "language": "GDScript",
@@ -30,6 +35,7 @@ _global_script_classes=[ {
 "path": "res://main/viewer.gd"
 } ]
 _global_script_class_icons={
+"FractalNavigation": "",
 "OptionToggler": "",
 "ToggleHelpButton": "",
 "UrlButton": "",
